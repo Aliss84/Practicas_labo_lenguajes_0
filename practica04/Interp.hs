@@ -31,22 +31,24 @@ curryFun [x] e      = Just (Fun x e) -- como la lambda λx.e
 curryFun (x:xs) e
     | elem x xs = Nothing -- revisar
     | otherwise = Fun x <$> curryFun xs e
--- tal vez sea mas haskell idiomatica utilizar applicative como en la practica anterior
+-- tal vez sea mas haskell idiomatica utilizar applicative como en la practica anterior "Amy"
 
 -- Convierte una aplicacion con uno o mas argumentos en aplicaciones unarias
 -- asociadas por la izquierda.
 curryApp :: ASA -> [ASA] -> Maybe ASA
 curryApp _ []       = Nothing
 curryApp e (x:xs)   = Just $ foldl App (App e x) xs -- creo debe ser de izquierda a derechar para separar las aplicaciones como en matematicas con la notación prefija
--- creo que esto debería de heredar la instancia de clase Maybe Foldable ASA => Asa -> [ASA] -> Maybe ASA
+-- creo que esto debería de heredar la instancia de clase Maybe Foldable ASA => Asa -> [ASA] -> Maybe ASA "Amy"
 
-{-
 -- Convierte dos o mas operandos en operaciones binarias asociadas por la
 -- izquierda. El constructor recibido sera Add o Sub.
 binaryOp :: (ASA -> ASA -> ASA) -> [ASA] -> Maybe ASA
-binaryOp _ [] = Nothing
-binaryOp f xs
+binaryOp _ []       = Nothing -- lista vacia
+binaryOp _ [x]      = Nothing -- Un solo operando [_]
+binaryOp f (x:xs)   = Just $ foldl f x xs -- por hipótesis de que f sea una aplicación binaria; f $ (f (f a b) c) d
+-- creo esto forma un monoide
 
+{-
 -- Convierte las ligaduras de let* en let anidados y despues elimina cada let
 -- mediante LetS x e1 e2 ==> App (Fun x e2') e1'. La primera ligadura debe
 -- quedar en el let exterior para que las siguientes puedan usarla.
