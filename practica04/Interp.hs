@@ -26,11 +26,23 @@ type Env = [(Nombre, Value)]
 -- Convierte una lista no vacia de parametros distintos en funciones
 -- unarias anidadas. El primer parametro queda en la funcion exterior.
 curryFun :: [Nombre] -> ASA -> Maybe ASA
+curryFun [] _       = Nothing
+curryFun [x] e      = Just (Fun x e) -- como la lambda λx.e
+curryFun (x:xs) e
+    | elem x xs = Nothing -- revisar
+    | otherwise = case curryFun xs e of
+        Just v  -> Just $ Fun x v
+        Nothing -> Nothing
+-- tal vez sea mas haskell idiomatica utilizar applicative como en la practica anterior
 
 -- Convierte una aplicacion con uno o mas argumentos en aplicaciones unarias
 -- asociadas por la izquierda.
 curryApp :: ASA -> [ASA] -> Maybe ASA
+curryApp _ [] = Nothing
+curryApp e xs = Just $ foldr App e xs -- creo debe ser de izquierda a derechar para separar las aplicaciones como en matematicas con la notación prefija
+-- creo que esto debería de heredar la instancia de clase Maybe Foldable a => Asa -> [ASA] -> Maybe ASA
 
+{-
 -- Convierte dos o mas operandos en operaciones binarias asociadas por la
 -- izquierda. El constructor recibido sera Add o Sub.
 binaryOp :: (ASA -> ASA -> ASA) -> [ASA] -> Maybe ASA
@@ -52,3 +64,4 @@ lookupEnv :: Nombre -> Env -> Maybe Value
 -- Conserva la resta truncada y la convencion de que todo numero cuenta como
 -- verdadero cuando aparece como operando de Not.
 bigStep :: Env -> ASA -> Maybe Value
+-}
