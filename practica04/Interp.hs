@@ -80,7 +80,7 @@ desugar (AddS p)                = do
 
 desugar (SubS p)                = do
     p1 <- mapM desugar p
-    binaryOp Sub p1
+    binaryOp Sub p1 -- extraño el binOp
 
 -- La aplicación de mapM_ :: (Foldable t, Monad m) => (a -> m b) -> t a -> m () se usa para aplicar en forma de functor o aplicative hacia listas en lugar de usar <$> en un applicative, dependiendo del prelude este puede ser o no de tipo Mafbe Monad (que por transitividad un functor es applicative y applicative es un paso menos abstracto para una monad) ref: https://hoogle.haskell.org/?q=mapM_
 
@@ -89,7 +89,7 @@ desugar (LetS lambda x y)       = do
     a <- desugar x
     b <- desugar y
     Just $ App (Fun lambda b) a
-    -- Esto requiere Justo ya que con las funciones anteriores ya es de tipo Mayxbe
+    -- Esto requiere Justo ya que con las funciones anteriores ya es de tipo Mayxbe, a excepcion de esto
 
 -- let shiny
 desugar (LetStarS [] cuerpo)                    = desugar cuerpo -- me parece que esto solo regresa la variable que halla
@@ -101,11 +101,19 @@ desugar (NotS e)                = do
     prop <- desugar e
     Just $ Not prop
 
-{-
 -- RETO 2: evaluacion con cerraduras ---------------------------------------
 
 -- Busca la asociacion mas reciente de un identificador.
 lookupEnv :: Nombre -> Env -> Maybe Value
+lookupEnv _ [] = Nothing            -- no es como que haya algún lugar en donde buscar
+lookupEnv x ((k, v):xs)             -- recursión sobre listo de tipo tupla
+    | x == k    = Just v            -- aunque se puede hacer snd, pero como se especifica como caso recursivo no se puede usar
+    | otherwise = lookupEnv x xs    -- busca en el siguiente
+
+-- Nota, en haskell ya existe lookup, creo esto se podria aprovechar usando mejor el metalenguaje
+-- lookup :: Eq a => a -> [(a, b)] -> Maybe b; ref: https://hoogle.haskell.org/?hoogle=lookup
+-- además de venir con point-free, lo que lo hace mas haskell idiomatico
+-- lookupEnv = lookup
 
 -- Evalua con alcance estatico. Fun produce una cerradura con el ambiente
 -- actual. App evalua primero la posicion de funcion, despues el argumento y
@@ -114,4 +122,46 @@ lookupEnv :: Nombre -> Env -> Maybe Value
 -- Conserva la resta truncada y la convencion de que todo numero cuenta como
 -- verdadero cuando aparece como operando de Not.
 bigStep :: Env -> ASA -> Maybe Value
--}
+-- esto tiene una aplicacion de applicative y/o monad
+-- expr atomicas
+bigStep entorno (Id x)          = lookupEnv x entorno
+bigStep _ (Num y)               = Just $ NumV y
+bigStep _ (Boolean z)           = Just $ BooleanV z
+-- no se si es Num valor o Num Value
+
+-- operaciones aritmeticas
+bigStep entorno (Add x y)       = do
+    n1 <- bigStep entorno x
+    n2 <- bigStep entorno y
+    case (n1, n2) of
+        (NumV n1, NumV n2)  -> Just $ NumV (n1 + n2)
+        _                   -> Nothing
+
+bigStep entorno (Sub x y)       = do
+    n1 <- bigStep entorno x
+    n2 <- bigStep entorno y
+    case (n1, n2) of
+        (NumV n1, NumV n2)  -> Just $ NumV (n1 - n2)
+        _                   -> Nothing
+
+-- función estable/cerrada
+bigStep entorno (Fun x cuerpo)  = Just $ ClosureV x cuerpo entorno
+
+-- aplicación de aplicaciones
+bigStep entorno (App x y)       = do
+    vFuncion <- bigStep entorno x
+    vParam <- bigStep entorno y
+    case vFuncion of
+        ClosureV z cuerpo entornoDef    -> bigStep ((z, vParam):entornoDef) cuerpo -- recursión sobre las tuplas en las que se hizo el paso grande
+        _                               -> Nothing -- si no esta la estructura estable en particular
+
+-- nuestro Not
+bigStep entorno (Not e) = do
+    valor <- bigStep entorno e
+    case valor of
+        BooleanV a  -> Just $ BooleanV (not a)
+        _           -> Nothing
+
+-- si se usa applicative, el desultado de las evaluaciones indica en que entorno se usará bajo la aplicacios, similar a un functor
+-- el caso _ simplemente no se evalua y roterna nothing evitando que todo exlpote
+
