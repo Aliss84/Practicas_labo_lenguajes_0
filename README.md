@@ -26,7 +26,7 @@ $ cabal install --lib QuickCheck
 
 **(Esta lista se irá actualizando constantemente)**
 
-Las versiones instladad a la fecha 2026-08-30 son:
+Las versiones instaladas a la fecha 2026-08-30 son:
 - alex 3.5.4.2
 - happy 2.2
 - QuickCheck 2.18.0.0
