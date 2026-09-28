@@ -116,13 +116,13 @@ prop_alcance_estatico exterior interior argumento =
 
 prop_cerradura_puede_escapar :: Int -> Int -> Bool
 prop_cerradura_puede_escapar n m =
-    let programa =
+  let programa =
         App
-            (App
-                (Fun "x" (Fun "y" (Add (Id "x") (Id "y"))))
-                (Num n))
-            (Num m)
-    in bigStep [] programa == Just (NumV (n + m))
+          (App
+            (Fun "x" (Fun "y" (Add (Id "x") (Id "y"))))
+            (Num n))
+          (Num m)
+   in bigStep [] programa == Just (NumV (n + m))
 
 prop_aplicacion_es_ansiosa :: Bool
 prop_aplicacion_es_ansiosa =
