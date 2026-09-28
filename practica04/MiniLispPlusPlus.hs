@@ -9,22 +9,28 @@ import System.Console.Haskeline (defaultSettings, getInputLine, runInputT)
 -- Integra el analisis, el desazucarado y la evaluacion desde el ambiente
 -- vacio. Propaga Nothing desde cualquiera de las dos etapas finales.
 evalua :: String -> Maybe Value
+evalua entrada = do
+    let listaTokens = lexer entrada
+    let sasaEntrada = parse listaTokens
+    asaEntrada <- desugar sasaEntrada
+    bigStep [] asaEntrada
 
 -- Infraestructura provista: no forma parte de los retos.
 repl :: IO ()
 repl = runInputT defaultSettings loop
     where
         loop = do
-        minput <- getInputLine "MiniLisp++> "
-        case minput of
-            Nothing -> pure ()
-            Just ":q" -> pure ()
-            Just entrada -> do
-        case evalua entrada of
-            Just valor -> liftIO $ print valor
-            Nothing -> liftIO $ putStrLn "Error: evaluacion bloqueada"
-            loop
+            minput <- getInputLine "MiniLisp++> "
+            case minput of
+                Nothing -> pure ()
+                Just ":q" -> pure ()
+                Just entrada -> do
+                    case evalua entrada of
+                        Just valor -> liftIO $ print valor
+                        Nothing -> liftIO $ putStrLn "Error: evaluacion bloqueada"
+                    loop
 
+-- @ayudante, por alguna razon no se tabuló bien todo y tuve que volver a tabularlo, aunque creo es por mi config para el lenguaje haskell
 main :: IO ()
 main = repl
 
