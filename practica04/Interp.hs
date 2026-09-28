@@ -141,7 +141,7 @@ bigStep entorno (Sub x y)       = do
     n1 <- bigStep entorno x
     n2 <- bigStep entorno y
     case (n1, n2) of
-        (NumV n1, NumV n2)  -> Just $ NumV (n1 - n2)
+        (NumV n1, NumV n2)  -> Just $ NumV (max 0 (n1 - n2))
         _                   -> Nothing
 
 -- función estable/cerrada
