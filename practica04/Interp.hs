@@ -31,7 +31,7 @@ curryFun [x] e      = Just (Fun x e) -- como la lambda λx.e
 curryFun (x:xs) e
     | elem x xs = Nothing -- revisar
     | otherwise = Fun x <$> curryFun xs e
--- tal vez sea mas haskell idiomatica utilizar applicative como en la practica anterior "Amy"
+-- tal vez sea mas haskell idiomatica utilizar applicative como en la practica anterior "Amy" y Estefy
 
 -- Convierte una aplicacion con uno o mas argumentos en aplicaciones unarias
 -- asociadas por la izquierda.
@@ -45,15 +45,61 @@ curryApp e (x:xs)   = Just $ foldl App (App e x) xs -- creo debe ser de izquierd
 binaryOp :: (ASA -> ASA -> ASA) -> [ASA] -> Maybe ASA
 binaryOp _ []       = Nothing -- lista vacia
 binaryOp _ [x]      = Nothing -- Un solo operando [_]
-binaryOp f (x:xs)   = Just $ foldl f x xs -- por hipótesis de que f sea una aplicación binaria; f $ (f (f a b) c) d
+binaryOp f (x:xs)   = Just $ foldl f x xs -- por hipótesis de que f sea una aplicación binaria, x y xs una expresión; f $ (f (f a b) c) d
 -- creo esto forma un monoide
 
-{-
+
 -- Convierte las ligaduras de let* en let anidados y despues elimina cada let
 -- mediante LetS x e1 e2 ==> App (Fun x e2') e1'. La primera ligadura debe
 -- quedar en el let exterior para que las siguientes puedan usarla.
 desugar :: SASA -> Maybe ASA
+-- rola para esta sección: https://tidal.com/track/61136961/u
+-- El SASA está en el Grammars.y
+-- Expresiones atómicas
+desugar (IdS x)                 = Just $ Id x
+desugar (NumS y)                = Just $ Num y
+desugar (BooleanS z)            = Just $ Boolean z
 
+-- Funiciones
+desugar (FunS e cuerpo)         = do
+    cuerpoA <- desugar cuerpo
+    curryFun e cuerpoA
+-- Supongamos que e es una funcion currificada, primero desazucaramos el cuerpo para obtener la lista que se pera de curryFun y aplicamos el ASA
+
+-- aplicaciones con curry
+desugar (AppS s p0)             = do
+    t <- desugar s
+    p1 <- mapM desugar p0
+    -- ALgo similar a lo de arriba
+    curryApp t p1
+
+-- las de las binOp (creo se lee mejor que binaryOp), y supongo que podria abstraerse a algo más general
+desugar (AddS p)                = do
+    p1 <- mapM desugar p
+    binaryOp Add p1
+
+desugar (SubS p)                = do
+    p1 <- mapM desugar p
+    binaryOp Sub p1
+
+-- let normal (nuestro Let)
+desugar (LetS lambda x y)       = do
+    a <- desugar x
+    b <- desugar y
+    Just $ App (Fun lambda b) a
+    -- Esto requiere Justo ya que con las funciones anteriores ya es de tipo Mayxbe
+
+-- let shiny
+desugar (LetStarS [] cuerpo)                    = desugar cuerpo
+desugar (LetStarS ((x, s):bindings) cuerpo)     = desugar (LetS x s (LetStarS bindings cuerpo))
+-- a este si no le entendí :'v
+
+-- nuestr NOT
+desugar (NotS e)                = do
+    prop <- desugar e
+    Just $ Not prop
+
+{-
 -- RETO 2: evaluacion con cerraduras ---------------------------------------
 
 -- Busca la asociacion mas reciente de un identificador.
