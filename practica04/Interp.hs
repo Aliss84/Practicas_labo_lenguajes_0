@@ -82,6 +82,8 @@ desugar (SubS p)                = do
     p1 <- mapM desugar p
     binaryOp Sub p1
 
+-- La aplicación de mapM_ :: (Foldable t, Monad m) => (a -> m b) -> t a -> m () se usa para aplicar en forma de functor o aplicative hacia listas en lugar de usar <$> en un applicative, dependiendo del prelude este puede ser o no de tipo Mafbe Monad (que por transitividad un functor es applicative y applicative es un paso menos abstracto para una monad) ref: https://hoogle.haskell.org/?q=mapM_
+
 -- let normal (nuestro Let)
 desugar (LetS lambda x y)       = do
     a <- desugar x
@@ -90,9 +92,9 @@ desugar (LetS lambda x y)       = do
     -- Esto requiere Justo ya que con las funciones anteriores ya es de tipo Mayxbe
 
 -- let shiny
-desugar (LetStarS [] cuerpo)                    = desugar cuerpo
-desugar (LetStarS ((x, s):bindings) cuerpo)     = desugar (LetS x s (LetStarS bindings cuerpo))
--- a este si no le entendí :'v
+desugar (LetStarS [] cuerpo)                    = desugar cuerpo -- me parece que esto solo regresa la variable que halla
+desugar (LetStarS ((x, s):bindings) cuerpo)     = desugar (LetS x s (LetStarS bindings cuerpo)) -- se hace recursión sobre una lista con elemento(s) y se pasa la lógica de LetS hacia todo su cuerpo, creo esto tambien debería ser applicative en su defecto monádico con mapM
+-- a este si casi no le entendí :'v
 
 -- nuestr NOT
 desugar (NotS e)                = do
