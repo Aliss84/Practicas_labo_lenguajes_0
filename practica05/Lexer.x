@@ -16,53 +16,58 @@ $idrest = [A-Za-z0-9_]
 
 tokens :-
 
-  $white+               ;
+    $white+               ;
 
-  \(                    { \_ -> TokenPA }
-  \)                    { \_ -> TokenPC }
-  \+                    { \_ -> TokenSuma }
-  \-                    { \_ -> TokenResta }
-  not                   { \_ -> TokenNot }
-  let\*                 { \_ -> TokenLetStar }
-  let                   { \_ -> TokenLet }
-  lambda                { \_ -> TokenLambda }
+    \(                    { \_ -> TokenPA }
+    \)                    { \_ -> TokenPC }
+    \+                    { \_ -> TokenSuma }
+    \-                    { \_ -> TokenResta }
+    not                   { \_ -> TokenNot }
+    let\*                 { \_ -> TokenLetStar }
+    let                   { \_ -> TokenLet }
+    lambda                { \_ -> TokenLambda }
 
-  -- RETO 1
-  -- Agrega aqui las reglas para if, cond, else y letrec. Las palabras
-  -- reservadas deben aparecer antes de la regla general de identificadores.
+    -- RETO 1
+    -- Agrega aqui las reglas para if, cond, else y letrec. Las palabras
+    -- reservadas deben aparecer antes de la regla general de identificadores.
+    -- Por spoiler del data Token
+    if                      { \_ -> TokenIf }
+    cond                    { \_ -> TokenCond }
+    else                    { \_ -> TokenElse }
+    letrec                  { \_ -> TokenLetRec }
 
-  "#t"                  { \_ -> TokenBool True }
-  "#f"                  { \_ -> TokenBool False }
+    "#t"                    { \_ -> TokenBool True }
+    "#f"                    { \_ -> TokenBool False }
 
-  0$digit+              { \s -> error ("Lexical error: natural con cero inicial = "
+    0$digit+                { \s -> error ("Lexical error: natural con cero inicial = "
                                       ++ show s) }
-  @nat                  { \s -> TokenNum (read s) }
+    @nat                    { \s -> TokenNum (read s) }
 
-  $letter$idrest*       { \s -> TokenId s }
+    $letter$idrest*         { \s -> TokenId s }
 
-  .                     { \s -> error ("Lexical error: caracter no reconocido = "
+    .                       { \s -> error ("Lexical error: caracter no reconocido = "
                                       ++ show s
                                       ++ " | codepoints = "
                                       ++ show (map fromEnum s)) }
 
 {
 data Token
-  = TokenId String
-  | TokenNum Int
-  | TokenBool Bool
-  | TokenSuma
-  | TokenResta
-  | TokenNot
-  | TokenLet
-  | TokenLetStar
-  | TokenLambda
-  | TokenIf
-  | TokenCond
-  | TokenElse
-  | TokenLetRec
-  | TokenPA
-  | TokenPC
-  deriving (Eq, Show)
+    = TokenId String
+    | TokenNum Int
+    | TokenBool Bool
+    | TokenSuma
+    | TokenResta
+    | TokenNot
+    | TokenLet
+    | TokenLetStar
+    | TokenLambda
+    | TokenIf
+    | TokenCond
+    | TokenElse
+    | TokenLetRec
+    | TokenPA
+    | TokenPC
+    deriving (Eq, Show)
 
 normalizeSpaces :: String -> String
 normalizeSpaces = map (\c -> if isSpace c then '\x20' else c)
