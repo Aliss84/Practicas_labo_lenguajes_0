@@ -160,6 +160,7 @@ bigStep entorno (Not e) = do
     valor <- bigStep entorno e
     case valor of
         BooleanV a  -> Just $ BooleanV (not a)
+        NumV _      -> Just $ BooleanV False -- para cualquier número, da False, creo eso lo vimos en la 2da semana
         _           -> Nothing
 
 -- si se usa applicative, el desultado de las evaluaciones indica en que entorno se usará bajo la aplicacios, similar a un functor
