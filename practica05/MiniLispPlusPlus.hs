@@ -14,13 +14,24 @@ import System.Console.Haskeline (InputT, defaultSettings, getInputLine, runInput
 --       (lambda x. f (x x))
 --       (lambda x. f (x x))
 combinadorY :: ASA
+combinadorY = Fun(Id("f"),App(Fun(Id("x"),App(Id("f"),App(Id("x"), Id("x")))),Fun(Id("x"),App(Id("f"),App(Id("x"), Id("x"))))))
+
 
 -- Evalua combinadorY en el ambiente vacio y asocia su valor con el nombre Y.
 prelude :: Env
+prelude =
+  let 
+    Just valY = bigStep []combinadorY
+  in [("Y", valY)]
 
 -- Integra el analisis, el desazucarado y la evaluacion desde prelude.
 -- El resultado final debe pasar por strict antes de devolverse.
 evalua :: String -> Maybe Value
+evalua s
+  |Just e <- desugar(parser(lexer x)) = 
+    let Just v = bigSep prelude e
+    in strict v
+  |Otherwise = Nothing
 
 -- Infraestructura provista. No forma parte de los retos.
 repl :: IO ()
