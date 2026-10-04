@@ -47,7 +47,7 @@ binaryOp f (x:xs)   = Just $ foldl f x xs
 -- else es el ultimo argumento y se conserva como la rama final.
 desugarCond :: [(SASA, SASA)] -> SASA -> Maybe ASA
 desugarCond [] e =  desugar e
-desugarCond (c,r) e =  desugar(If c r e)  --cond((c r) e) = if c r e
+desugarCond [(c,r)] e =  desugar(IfS c r e)  --cond((c r) e) = if c r e
 desugarCond ((c1, r1): l) e = desugar(IfS c1 r1 (CondS l e))
 
 -- Elimina toda la sintaxis superficial. CondS se traduce a If anidados.
@@ -57,9 +57,9 @@ desugarCond ((c1, r1): l) e = desugar(IfS c1 r1 (CondS l e))
 --
 -- y despues se elimina tambien ese LetS. LetRecS no pertenece al nucleo.
 desugar :: SASA -> Maybe ASA
-desugar (IdS x) = Just Id x
-desugar (NumS y) = Just Num y
-desugar (BooleanS z) = Just Boolean z
+desugar (IdS x) = Just (Id x)
+desugar (NumS y) = Just (Num y)
+desugar (BooleanS z) = Just (Boolean z)
 desugar (IfS c t e)=
   let
     Just vc = desugar c
@@ -84,9 +84,9 @@ lookupEnv x ((k, v):xs)
 -- Exige una cerradura de expresion usando el ambiente guardado. Si al
 -- evaluarla se obtiene otra ExprV, continua hasta producir otro valor.
 strict :: Value -> Maybe Value
-strict (NumV x) = Just x
-strict (Boolean b) = Just b
-strict (ClosureV x a env) = Just (x a env)
+strict (NumV x) = Just (NumV x)
+strict (BooleanV b) = Just (BooleanV b)
+strict (ClosureV x a env) = Just (ClosureV x a env)
 strict (ExprV a env)
     |Just e' <- bigStep env a = strict e'
     |otherwise = Nothing
@@ -104,25 +104,28 @@ strict (ExprV a env)
 bigStep :: Env -> ASA -> Maybe Value
 --expresiones atómicas
 bigStep env (Id x) = lookupEnv x env
-bigStep _ (Num n) = Just NumV n
-bigStep _ (BooleanV b) = Just BooleanV b
+bigStep _ (Num n) = Just (NumV n)
+bigStep _ (Boolean b) = Just (BooleanV b)
 --operaciones aritméticas
-bigStep env (Add x y) 
-    |(Just e1, Just e2) == (bigStep env x, bigStep env y) =
-        let
-            Just (NumV n) = strict e1
-            Just (NumV m) = strict e2
-        in Just(NumV (n + m))
-    |otherwise = Nothing
-bigStep env (Sub x y) 
-    |(Just e1, Just e2) == (bigStep env x, bigStep env y) =
-        let
-            Just (NumV n) = strict e1
-            Just (NumV m) = strict e2
-        in Just (NumV (n-m))
-    |otherwise = Nothing
+bigStep env (Add x y) = 
+    let
+        Just e1 = bigStep env x
+        Just e2 = bigStep env y
+
+        Just (NumV n) = strict e1           
+        Just (NumV m) = strict e2
+    in Just(NumV (n + m))
+
+bigStep env (Sub x y)= 
+    let
+        Just e1 = bigStep env x
+        Just e2 = bigStep env y
+
+        Just (NumV n) = strict e1           
+        Just (NumV m) = strict e2
+    in Just(NumV (n + m))
 --Fun
-bigStep env (Fun p b) = Just ClosureV p b env
+bigStep env (Fun p b) = Just (ClosureV p b env)
 --App
 bigStep env (App f a) =
     let
