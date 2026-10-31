@@ -6,7 +6,7 @@ module Laboratorio06 where
 potencia :: Int -> Int -> Int
 potencia _ 0 = 1
 potencia base exponente =
-  base * potencia base (exponente - 1)
+    base * potencia base (exponente - 1)
 
 potenciaCola :: Int -> Int -> Int
 potenciaCola = undefined
@@ -56,7 +56,7 @@ intercala :: [a] -> [a] -> [a]
 intercala [] ys = ys
 intercala xs [] = xs
 intercala (x : xs) (y : ys) =
-  x : y : intercala xs ys
+    x : y : intercala xs ys
 
 intercalaCola :: [a] -> [a] -> [a]
 intercalaCola = undefined
