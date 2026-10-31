@@ -14,7 +14,7 @@ potenciaCola n m        = potenciaCola' n m 1
     where -- este uso de where es curioso
         potenciaCola' :: Int -> Int -> Int -> Int
         potenciaCola' _ 0 acc = acc -- si no hay nada que multiplicar, entonces se devuelve el acumulador
-        potenciaCola' n m acc = acc * potenciaCola' n (m - 1) (acc * n) -- para cuando m = 0, se guarde el valor
+        potenciaCola' n m acc = potenciaCola' n (m - 1) (acc * n) -- para cuando m = 0, se guarde el valor
 
 potenciaCPS :: Int -> Int -> (Int -> r) -> r
 potenciaCPS _ 0 k = k 1 -- suponiendo que sea cierto que para todo a^0 = 1, k captura el valor y devuelve lo que capture k (que supongo por el tipo, r :: Int y así k :: Int -> Int)
@@ -28,30 +28,31 @@ longitud (_ : xs)   = 1 + longitud xs
 
 longitudColaExtra :: [a] -> Int -> Int
 longitudColaExtra [] acc        = acc
-longitudColaExtra (x:xs) acc    = longitudCola xs (1 + acc)
+longitudColaExtra (x:xs) acc    = longitudColaExtra xs (1 + acc)
 
 longitudCola :: [a] -> Int
 longitudCola xs     = longitudColaExtra xs 0
 
 longitudCPS :: [a] -> (Int -> r) -> r
-longitudCPS [] k        = k
+longitudCPS [] k        = k 0
 longitudCPS (x:xs) k    = longitudCPS xs (\v -> k (1 + v))
 
 -- 3. Reversa de una lista --------------------------------------------------
 
 reversa :: [a] -> [a]
 reversa [] = []
-reversa (x : xs) = reversa xs : [x] -- no es algo personal, pero prefiero que las listas se concatenan usando el operando (:), porque aveces con listas con clase de tipo a, puede dar errores :(
+reversa (x : xs) = reversa xs ++ [x] -- no es algo personal, pero prefiero que las listas se concatenan usando el operando (:), porque aveces con listas con clase de tipo a, puede dar errores :(
 
-reversaColaExtra :: [a] -> [b] -> [a] -- me parece que el 
+reversaColaExtra :: [a] -> [a] -> [a]
 reversaColaExtra [] lista       = lista
 reversaColaExtra (x:xs) lista   = reversaColaExtra (xs) (x:lista)
 
 reversaCola :: [a] -> [a]
-reversaCola = undefined
+reversaCola y = reversaColaExtra y []
 
-reversaCPS :: [a] -> ([a] -> r) -> r
-reversaCPS = undefined
+reversaCPS :: [a] -> ([a] -> r) -> r 
+reversaCPS [] k = k []
+reversaCPS (x:xs) k = reversaCPS xs (\v -> k(x:v))
 
 -- 4. Concatenacion de una lista de listas ---------------------------------
 
@@ -59,11 +60,17 @@ concatena :: [[a]] -> [a]
 concatena [] = []
 concatena (xs : xss) = xs ++ concatena xss
 
+concatenaColaExtra :: [[a]] -> [a] -> [a]
+concatenaColaExtra [] lista = lista
+concatenaColaExtra (x:xs) lista = concatenaColaExtra xs (lista++x)
+
 concatenaCola :: [[a]] -> [a]
-concatenaCola = undefined
+concatenaCola [] = concatenaColaExtra [] [] 
+concatenaCola (xs : xss) = concatenaColaExtra (xs : xss) [] 
 
 concatenaCPS :: [[a]] -> ([a] -> r) -> r
-concatenaCPS = undefined
+concatenaCPS [] k = k []
+concatenaCPS (xs : xss) k = concatenaCPS xss (\v -> k(xs++v)) 
 
 -- 5. Intercalado de dos listas --------------------------------------------
 
@@ -73,9 +80,20 @@ intercala xs [] = xs
 intercala (x : xs) (y : ys) =
     x : y : intercala xs ys
 
-intercalaCola :: [a] -> [a] -> [a]
-intercalaCola = undefined
+intercalaColaExtra :: [a] -> [a] -> [a] -> [a] 
+intercalaColaExtra [] y lista = lista++y
+intercalaColaExtra x [] lista = lista++x
+intercalaColaExtra (x:xs) (y:ys) lista = intercalaColaExtra xs ys (lista++[x,y])
 
-intercalaCPS :: [a] -> [a] -> ([a] -> r) -> r
-intercalaCPS = undefined
+intercalaCola :: [a] -> [a] -> [a]
+intercalaCola [] [] = intercalaColaExtra [] [] []
+intercalaCola [] (y:ys) = intercalaColaExtra [] (y:ys) []
+intercalaCola (x:xs) [] = intercalaColaExtra (x:xs) [] []
+intercalaCola (x:xs) (y:ys) = intercalaColaExtra (x:xs) (y:ys) []
+
+intercalaCPS :: [a] -> [a] -> ([a] -> r) -> r 
+intercalaCPS [] [] k = k []
+intercalaCPS [] (y:ys) k = k (y:ys)
+intercalaCPS (x:xs) [] k = k (x:xs)
+intercalaCPS (x:xs) (y:ys) k = intercalaCPS xs ys (\v -> k(x:y:v))
 
